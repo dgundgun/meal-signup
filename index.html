@@ -31,6 +31,7 @@
       text-align: center;
       cursor: pointer;
       border-radius: 8px;
+      user-select: none;
     }
     .day.selected {
       background-color: #4CAF50;
@@ -66,9 +67,12 @@
   <button onclick="submitForm()">📤 신청하기</button>
 
   <script>
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbx6ivgu1bVYnD9R2CseJCncZ-oU-oTrSG9o39525WWUACrJivMavfhrYkqYVuKgVRt9/exec';
+
     const weekdays = ['월', '화', '수', '목', '금'];
     const today = new Date();
-    const monday = new Date(today.setDate(today.getDate() - today.getDay() + 1));
+    const monday = new Date(today);
+    monday.setDate(today.getDate() - today.getDay() + 1); // 월요일로 조정
 
     const calendar = document.getElementById('calendar');
 
@@ -77,8 +81,8 @@
       date.setDate(monday.getDate() + i);
 
       const yyyy = date.getFullYear();
-      const mm = date.getMonth() + 1;
-      const dd = date.getDate();
+      const mm = String(date.getMonth() + 1).padStart(2, '0');
+      const dd = String(date.getDate()).padStart(2, '0');
 
       const dayBox = document.createElement('div');
       dayBox.className = 'day';
@@ -100,13 +104,29 @@
         return;
       }
 
-      const selectedDays = [];
+      const selectedDates = [];
       document.querySelectorAll('.day.selected').forEach(day => {
-        selectedDays.push(day.dataset.date);
+        selectedDates.push(day.dataset.date);
       });
 
-      alert(`${name} 님이 신청한 날짜:\n${selectedDays.join(', ')}`);
-      // 여기에 서버 전송 로직 추가 가능 (fetch/AJAX 등)
+      if (selectedDates.length === 0) {
+        alert('신청할 날짜를 선택하세요!');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("name", name);
+      formData.append("dates", selectedDates.join(", "));
+
+      fetch(scriptURL, { method: 'POST', body: formData })
+        .then(response => {
+          alert("✅ 신청이 완료되었습니다!");
+          document.getElementById('name').value = "";
+          document.querySelectorAll('.day.selected').forEach(day => {
+            day.classList.remove('selected');
+          });
+        })
+        .catch(error => alert("❌ 오류 발생: " + error.message));
     }
   </script>
 
