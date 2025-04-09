@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>아침 식사 신청</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+    }
+    h1 {
+      text-align: center;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 20px;
+      font-size: 16px;
+    }
+    .calendar {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .day {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: center;
+      cursor: pointer;
+      border-radius: 8px;
+    }
+    .day.selected {
+      background-color: #4CAF50;
+      color: white;
+    }
+    .count {
+      font-size: 14px;
+      color: #777;
+      margin-top: 5px;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background-color: #2196F3;
+      color: white;
+      border: none;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🍽️ 아침 식사 신청</h1>
+
+  <input type="text" id="name" placeholder="이름을 입력하세요" />
+
+  <div class="calendar" id="calendar">
+    <!-- JS에서 자동 생성 -->
+  </div>
+
+  <button onclick="submitForm()">📤 신청하기</button>
+
+  <script>
+    const weekdays = ['월', '화', '수', '목', '금'];
+    const today = new Date();
+    const monday = new Date(today.setDate(today.getDate() - today.getDay() + 1));
+
+    const calendar = document.getElementById('calendar');
+
+    for (let i = 0; i < 5; i++) {
+      const date = new Date(monday);
+      date.setDate(monday.getDate() + i);
+
+      const yyyy = date.getFullYear();
+      const mm = date.getMonth() + 1;
+      const dd = date.getDate();
+
+      const dayBox = document.createElement('div');
+      dayBox.className = 'day';
+      dayBox.dataset.date = `${yyyy}-${mm}-${dd}`;
+      dayBox.innerHTML = `
+        <div>${weekdays[i]} (${mm}/${dd})</div>
+        <div class="count">0명</div>
+      `;
+      dayBox.addEventListener('click', () => {
+        dayBox.classList.toggle('selected');
+      });
+      calendar.appendChild(dayBox);
+    }
+
+    function submitForm() {
+      const name = document.getElementById('name').value.trim();
+      if (!name) {
+        alert('이름을 입력하세요!');
+        return;
+      }
+
+      const selectedDays = [];
+      document.querySelectorAll('.day.selected').forEach(day => {
+        selectedDays.push(day.dataset.date);
+      });
+
+      alert(`${name} 님이 신청한 날짜:\n${selectedDays.join(', ')}`);
+      // 여기에 서버 전송 로직 추가 가능 (fetch/AJAX 등)
+    }
+  </script>
+
+</body>
+</html>
