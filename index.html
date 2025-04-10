@@ -68,7 +68,7 @@
   <button onclick="submitForm()">📤 신청하기</button>
 
 <script>
-  const scriptURL = 'https://script.google.com/macros/s/AKfycbx3Q1z6YLnDMWQLCa-hup_HtUrgNdyDV5I0ueCnpHiMds5vSbRiZPz3J9u25ala79Jy/exec';
+  const scriptURL = 'https://script.google.com/macros/s/AKfycbwOJ4MKQ_XGeGyGW0K9Oso74QuFnSQA1_YqDsbO70nDHogzPLm-KOGzM4l2oj7oPkCI/exec';
 
   const weekdays = ['월', '화', '수', '목', '금'];
   const today = new Date();
@@ -120,18 +120,31 @@
     dateList.push(dateStr);
   }
 
-  // 신청자 수 + 메뉴 정보 불러오기
-  fetch(scriptURL + '?t=' + Date.now())
-    .then(res => res.json())
-    .then(data => {
-      dateList.forEach(date => {
-        const count = data.counts?.[date] ?? 0;
-        const menu = data.menus?.[date] ?? '메뉴 없음';
+// 신청자 수 + 메뉴 정보 불러오기
+fetch(scriptURL + '?t=' + Date.now())
+  .then(res => {
+    if (!res.ok) {
+      throw new Error("서버 응답 오류");
+    }
+    return res.json();
+  })
+  .then(data => {
+    dateList.forEach(date => {
+      const count = data.counts?.[date] ?? 0;
+      const menu = data.menus?.[date] ?? '메뉴 없음';
 
-        document.getElementById(`count-${date}`).innerText = `신청자: ${count}명`;
-        document.getElementById(`menu-${date}`).innerText = `메뉴: ${menu}`;
-      });
+      document.getElementById(`count-${date}`).innerText = `신청자: ${count}명`;
+      document.getElementById(`menu-${date}`).innerText = `메뉴: ${menu}`;
     });
+  })
+  .catch(err => {
+    console.error('신청자 수/메뉴 불러오기 오류:', err);
+    dateList.forEach(date => {
+      document.getElementById(`count-${date}`).innerText = `신청자: 불러오기 실패`;
+      document.getElementById(`menu-${date}`).innerText = `메뉴: 불러오기 실패`;
+    });
+  });
+
 
   function submitForm() {
     const name = document.getElementById('name').value.trim();
