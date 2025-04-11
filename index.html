@@ -13,12 +13,6 @@
     h1 {
       text-align: center;
     }
-    input[type="text"] {
-      width: 100%;
-      padding: 10px;
-      margin-bottom: 20px;
-      font-size: 16px;
-    }
     .calendar {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
@@ -37,15 +31,24 @@
       background-color: #4CAF50;
       color: white;
     }
+    .day.disabled {
+      pointer-events: none;
+      opacity: 0.4;
+    }
     .count {
-      font-size: 25px;
-      color: #555;
+      font-size: 16px;
       margin-top: 5px;
     }
     .menu {
       font-size: 13px;
-      color: #888;
+      color: #666;
       margin-top: 3px;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 20px;
+      font-size: 16px;
     }
     button {
       width: 100%;
@@ -62,126 +65,140 @@
 <body>
 
   <h1>🍽️ 다산 점심 식사 신청</h1>
- <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://dgundgun.github.io/meal-signup/" alt="QR Code">
+
+  <!-- QR 코드 -->
+  <div style="text-align: center; margin-bottom: 20px;">
+    <p>📱 QR코드를 스캔해서 신청하세요</p>
+    <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https://dgundgun.github.io/meal-signup/" alt="QR Code">
+  </div>
+
+  <!-- 이름 입력 -->
   <input type="text" id="name" placeholder="이름을 입력하세요" />
+
+  <!-- 캘린더 박스 -->
   <div class="calendar" id="calendar"></div>
+
+  <!-- 신청 버튼 -->
   <button onclick="submitForm()">📤 신청하기</button>
 
-<script>
-  const scriptURL = 'https://script.google.com/macros/s/AKfycbzy0-_Ud9tz_AMPJTc9x-uf0T-3LBTe6MOsN-x_wvriMhEBqeHaKB16f5ht7kDh34_z/exec';
+  <script>
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbzy0-_Ud9tz_AMPJTc9x-uf0T-3LBTe6MOsN-x_wvriMhEBqeHaKB16f5ht7kDh34_z/exec';
 
-const calendar = document.getElementById('calendar');
-const dateList = [];
-const today = new Date();
+    const calendar = document.getElementById('calendar');
+    const dateList = [];
+    const today = new Date();
 
-// 이번 주 월요일 기준 날짜 구하기
-const monday = new Date(today);
-monday.setDate(today.getDate() - today.getDay() + 1); // 월요일 시작
+    // 이번 주 월요일 기준
+    const monday = new Date(today);
+    monday.setDate(today.getDate() - today.getDay() + 1);
 
-let addedDays = 0;
-let i = 0;
+    let addedDays = 0;
+    let i = 0;
 
-while (addedDays < 10) {
-  const date = new Date(monday);
-  date.setDate(monday.getDate() + i);
-  const dayOfWeek = date.getDay();
+    while (addedDays < 10) {
+      const date = new Date(monday);
+      date.setDate(monday.getDate() + i);
+      const dayOfWeek = date.getDay();
 
-  // 일요일(0), 토요일(6)은 건너뛴다
-  if (dayOfWeek === 0 || dayOfWeek === 6) {
-    i++;
-    continue;
-  }
+      // 토요일(6), 일요일(0) 제외
+      if (dayOfWeek === 0 || dayOfWeek === 6) {
+        i++;
+        continue;
+      }
 
-  const yyyy = date.getFullYear();
-  const mm = String(date.getMonth() + 1).padStart(2, '0');
-  const dd = String(date.getDate()).padStart(2, '0');
-  const dateStr = `${yyyy}-${mm}-${dd}`;
-  const weekdayName = ['일', '월', '화', '수', '목', '금', '토'][dayOfWeek];
+      const yyyy = date.getFullYear();
+      const mm = String(date.getMonth() + 1).padStart(2, '0');
+      const dd = String(date.getDate()).padStart(2, '0');
+      const dateStr = `${yyyy}-${mm}-${dd}`;
+      const weekdayName = ['일', '월', '화', '수', '목', '금', '토'][dayOfWeek];
 
-  const dayBox = document.createElement('div');
-  dayBox.className = 'day';
-  dayBox.dataset.date = dateStr;
+      const dayBox = document.createElement('div');
+      dayBox.className = 'day';
+      dayBox.dataset.date = dateStr;
 
-  dayBox.innerHTML = `
-    <div>${weekdayName} (${mm}/${dd})</div>
-    <div class="count" id="count-${dateStr}">신청자: -</div>
-    <div class="menu" id="menu-${dateStr}">메뉴: -</div>
-  `;
+      dayBox.innerHTML = `
+        <div>${weekdayName} (${mm}/${dd})</div>
+        <div class="count" id="count-${dateStr}">신청자: -</div>
+        <div class="menu" id="menu-${dateStr}">메뉴: -</div>
+      `;
 
-  // 마감된 날짜는 비활성화 처리
-  if (isPast(date)) {
-    dayBox.classList.add('disabled');
-    dayBox.style.opacity = 0.4;
-    dayBox.style.pointerEvents = 'none';
-  } else {
-    dayBox.addEventListener('click', () => {
-      dayBox.classList.toggle('selected');
-    });
-  }
+      if (isPast(date)) {
+        dayBox.classList.add('disabled');
+      } else {
+        dayBox.addEventListener('click', () => {
+          dayBox.classList.toggle('selected');
+        });
+      }
 
-  calendar.appendChild(dayBox);
-  dateList.push(dateStr);
+      calendar.appendChild(dayBox);
+      dateList.push(dateStr);
 
-  addedDays++;
-  i++;
-}
-
-
-// 신청자 수 + 메뉴 정보 불러오기
-fetch(scriptURL + '?t=' + Date.now())
-  .then(res => {
-    if (!res.ok) {
-      throw new Error("서버 응답 오류");
-    }
-    return res.json();
-  })
-  .then(data => {
-    dateList.forEach(date => {
-      const count = data.counts?.[date] ?? 0;
-      const menu = data.menus?.[date] ?? '메뉴 없음';
-
-      document.getElementById(`count-${date}`).innerText = `신청자: ${count}명`;
-      document.getElementById(`menu-${date}`).innerText = `메뉴: ${menu}`;
-    });
-  })
-  .catch(err => {
-    console.error('신청자 수/메뉴 불러오기 오류:', err);
-    dateList.forEach(date => {
-      document.getElementById(`count-${date}`).innerText = `신청자: 불러오기 실패`;
-      document.getElementById(`menu-${date}`).innerText = `메뉴: 불러오기 실패`;
-    });
-  });
-
-
-  function submitForm() {
-    const name = document.getElementById('name').value.trim();
-    if (!name) {
-      alert('이름을 입력하세요!');
-      return;
+      addedDays++;
+      i++;
     }
 
-    const selectedDates = [];
-    document.querySelectorAll('.day.selected').forEach(day => {
-      selectedDates.push(day.dataset.date);
-    });
-
-    if (selectedDates.length === 0) {
-      alert('신청할 날짜를 선택하세요!');
-      return;
+    // 마감 확인 함수 (오전 9시 기준)
+    function isPast(date) {
+      const now = new Date();
+      const cutoff = new Date(date);
+      cutoff.setHours(9, 0, 0, 0);
+      return now > cutoff;
     }
 
-    const formData = new FormData();
-    formData.append("name", name);
-    formData.append("dates", selectedDates.join(", "));
-
-    fetch(scriptURL, { method: 'POST', body: formData })
-      .then(response => {
-        alert("✅ 신청이 완료되었습니다!");
-        document.getElementById('name').value = "";
-        document.querySelectorAll('.day.selected').forEach(day => {
-          day.classList.remove('selected');
+    // 신청자 수 + 메뉴 불러오기
+    fetch(scriptURL + '?t=' + Date.now())
+      .then(res => {
+        if (!res.ok) throw new Error("응답 오류");
+        return res.json();
+      })
+      .then(data => {
+        dateList.forEach(date => {
+          const count = data.counts?.[date] ?? 0;
+          const menu = data.menus?.[date] ?? '메뉴 없음';
+          document.getElementById(`count-${date}`).innerText = `신청자: ${count}명`;
+          document.getElementById(`menu-${date}`).innerText = `메뉴: ${menu}`;
         });
       })
-      .catch(error => alert("❌ 오류 발생: " + error.message));
-  }
-</script>
+      .catch(err => {
+        console.error('불러오기 오류:', err);
+        dateList.forEach(date => {
+          document.getElementById(`count-${date}`).innerText = `신청자: 불러오기 실패`;
+          document.getElementById(`menu-${date}`).innerText = `메뉴: 불러오기 실패`;
+        });
+      });
+
+    // 신청 처리
+    function submitForm() {
+      const name = document.getElementById('name').value.trim();
+      if (!name) {
+        alert('이름을 입력하세요!');
+        return;
+      }
+
+      const selectedDates = [];
+      document.querySelectorAll('.day.selected').forEach(day => {
+        selectedDates.push(day.dataset.date);
+      });
+
+      if (selectedDates.length === 0) {
+        alert('신청할 날짜를 선택하세요!');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("name", name);
+      formData.append("dates", selectedDates.join(", "));
+
+      fetch(scriptURL, { method: 'POST', body: formData })
+        .then(response => {
+          alert("✅ 신청이 완료되었습니다!");
+          document.getElementById('name').value = "";
+          document.querySelectorAll('.day.selected').forEach(day => {
+            day.classList.remove('selected');
+          });
+        })
+        .catch(error => alert("❌ 오류 발생: " + error.message));
+    }
+  </script>
+</body>
+</html>
