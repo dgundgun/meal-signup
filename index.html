@@ -88,7 +88,7 @@
   <button onclick="submitForm()">📤 신청하기</button>
 
   <script>
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbyYrc9zW4c2oashIF3nDSndB2y2KWCpTOAQF19mUiPq0zySRAtPe76oksUWOZY0i00d/exec';
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbwqR5uvzwcQ7VAkphkAWpZi7zkjnBbeuksw-MqLKAIz0T97TUd6SUG4qi4G_js-DVG8/exec';
 
     const calendar = document.getElementById('calendar');
     const dateList = [];
@@ -184,7 +184,7 @@
 
       const formData = new FormData();
       formData.append("name", name);
-      formData.append("dates", selectedDates.join(", "));
+      formData.append("dates", selectedDates.join(","));
 
       fetch(scriptURL, { method: 'POST', body: formData })
         .then(response => {
