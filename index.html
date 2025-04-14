@@ -2,8 +2,8 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>다산 점심 식사 신청</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>다산 점심 식사 신청</title>
   <style>
     body {
       font-family: sans-serif;
@@ -67,6 +67,11 @@
       text-align: center;
       margin-bottom: 20px;
     }
+    #nameList {
+      margin-top: 20px;
+      font-size: 14px;
+      line-height: 1.6;
+    }
   </style>
 </head>
 <body>
@@ -87,115 +92,140 @@
   <!-- 신청 버튼 -->
   <button onclick="submitForm()">📤 신청하기</button>
 
-  <script>
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbwHQ2V-HTE3HhdEWLQi6Y5EHJfUoriquISzAUkfOCvezYSelOLbwx3uFK3gO7scbDjO/exec';
+  <!-- 신청자 명단 확인 -->
+  <div style="text-align: center; margin-top: 20px;">
+    <button onclick="toggleList()">📋 신청자 명단 보기</button>
+  </div>
+  <div id="nameList" style="display: none;"></div>
 
-    const calendar = document.getElementById('calendar');
-    const dateList = [];
-    const today = new Date();
+<script>
+  const scriptURL = 'https://script.google.com/macros/s/AKfycbzPlkYhg6EI5rd_Mu4RqKv66caR6YI7q716-SRDUIRwLdyVCNTVURYcTwoDPMyEWNv0/exec';
+  const calendar = document.getElementById('calendar');
+  const dateList = [];
+  const today = new Date();
 
-    const monday = new Date(today);
-    monday.setDate(today.getDate() - today.getDay() + 1);
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - today.getDay() + 1);
 
-    let addedDays = 0;
-    let i = 0;
+  let addedDays = 0;
+  let i = 0;
 
-    while (addedDays < 10) {
-      const date = new Date(monday);
-      date.setDate(monday.getDate() + i);
-      const dayOfWeek = date.getDay();
-      if (dayOfWeek === 0 || dayOfWeek === 6) {
-        i++;
-        continue;
-      }
-
-      const yyyy = date.getFullYear();
-      const mm = String(date.getMonth() + 1).padStart(2, '0');
-      const dd = String(date.getDate()).padStart(2, '0');
-      const dateStr = `${yyyy}-${mm}-${dd}`;
-      const weekdayName = ['일', '월', '화', '수', '목', '금', '토'][dayOfWeek];
-
-      const dayBox = document.createElement('div');
-      dayBox.className = 'day';
-      dayBox.dataset.date = dateStr;
-
-      dayBox.innerHTML = `
-        <div>${weekdayName} (${mm}/${dd})</div>
-        <div class="count" id="count-${dateStr}">신청자: -</div>
-        <div class="menu" id="menu-${dateStr}">메뉴: -</div>
-      `;
-
-      if (isPast(date)) {
-        dayBox.classList.add('disabled');
-      } else {
-        dayBox.addEventListener('click', () => {
-          dayBox.classList.toggle('selected');
-        });
-      }
-
-      calendar.appendChild(dayBox);
-      dateList.push(dateStr);
-
-      addedDays++;
+  while (addedDays < 10) {
+    const date = new Date(monday);
+    date.setDate(monday.getDate() + i);
+    const dayOfWeek = date.getDay();
+    if (dayOfWeek === 0 || dayOfWeek === 6) {
       i++;
+      continue;
+    }
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const dd = String(date.getDate()).padStart(2, '0');
+    const dateStr = `${yyyy}-${mm}-${dd}`;
+    const weekdayName = ['일', '월', '화', '수', '목', '금', '토'][dayOfWeek];
+
+    const dayBox = document.createElement('div');
+    dayBox.className = 'day';
+    dayBox.dataset.date = dateStr;
+
+    dayBox.innerHTML = `
+      <div>${weekdayName} (${mm}/${dd})</div>
+      <div class="count" id="count-${dateStr}">신청자: -</div>
+      <div class="menu" id="menu-${dateStr}">메뉴: -</div>
+    `;
+
+    if (isPast(date)) {
+      dayBox.classList.add('disabled');
+    } else {
+      dayBox.addEventListener('click', () => {
+        dayBox.classList.toggle('selected');
+      });
     }
 
-    function isPast(date) {
-      const now = new Date();
-      const cutoff = new Date(date);
-      cutoff.setHours(9, 0, 0, 0);
-      return now > cutoff;
+    calendar.appendChild(dayBox);
+    dateList.push(dateStr);
+
+    addedDays++;
+    i++;
+  }
+
+  function isPast(date) {
+    const now = new Date();
+    const cutoff = new Date(date);
+    cutoff.setHours(9, 0, 0, 0);
+    return now > cutoff;
+  }
+
+  let nameData = {};
+
+  fetch(scriptURL + '?t=' + Date.now())
+    .then(res => res.json())
+    .then(data => {
+      nameData = data.names || {};
+      dateList.forEach(date => {
+        const count = data.counts?.[date] ?? 0;
+        const menu = data.menus?.[date] ?? '메뉴 없음';
+        document.getElementById(`count-${date}`).innerText = `신청자: ${count}명`;
+        document.getElementById(`menu-${date}`).innerText = `메뉴: ${menu}`;
+      });
+    })
+    .catch(err => {
+      console.error(err);
+      dateList.forEach(date => {
+        document.getElementById(`count-${date}`).innerText = `신청자: 불러오기 실패`;
+        document.getElementById(`menu-${date}`).innerText = `메뉴: 불러오기 실패`;
+      });
+    });
+
+  function toggleList() {
+    const listDiv = document.getElementById("nameList");
+    if (listDiv.style.display === "none") {
+      let html = "<h3>📋 신청자 명단</h3>";
+      const sortedDates = Object.keys(nameData).sort();
+      sortedDates.forEach(date => {
+        const names = nameData[date];
+        if (names.length > 0) {
+          html += `<p><strong>${date}</strong>: ${names.join(', ')}</p>`;
+        }
+      });
+      listDiv.innerHTML = html;
+      listDiv.style.display = "block";
+    } else {
+      listDiv.style.display = "none";
+    }
+  }
+
+  function submitForm() {
+    const name = document.getElementById('name').value.trim();
+    if (!name) {
+      alert('이름을 입력하세요!');
+      return;
     }
 
-    fetch(scriptURL + '?t=' + Date.now())
-      .then(res => res.json())
-      .then(data => {
-        dateList.forEach(date => {
-          const count = data.counts?.[date] ?? 0;
-          const menu = data.menus?.[date] ?? '메뉴 없음';
-          document.getElementById(`count-${date}`).innerText = `신청자: ${count}명`;
-          document.getElementById(`menu-${date}`).innerText = `메뉴: ${menu}`;
+    const selectedDates = [];
+    document.querySelectorAll('.day.selected').forEach(day => {
+      selectedDates.push(day.dataset.date);
+    });
+
+    if (selectedDates.length === 0) {
+      alert('신청할 날짜를 선택하세요!');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("name", name);
+    formData.append("dates", selectedDates.join(", "));
+
+    fetch(scriptURL, { method: 'POST', body: formData })
+      .then(response => {
+        alert("✅ 신청이 완료되었습니다!");
+        document.getElementById('name').value = "";
+        document.querySelectorAll('.day.selected').forEach(day => {
+          day.classList.remove('selected');
         });
       })
-      .catch(err => {
-        console.error(err);
-        dateList.forEach(date => {
-          document.getElementById(`count-${date}`).innerText = `신청자: 불러오기 실패`;
-          document.getElementById(`menu-${date}`).innerText = `메뉴: 불러오기 실패`;
-        });
-      });
-
-    function submitForm() {
-      const name = document.getElementById('name').value.trim();
-      if (!name) {
-        alert('이름을 입력하세요!');
-        return;
-      }
-
-      const selectedDates = [];
-      document.querySelectorAll('.day.selected').forEach(day => {
-        selectedDates.push(day.dataset.date);
-      });
-
-      if (selectedDates.length === 0) {
-        alert('신청할 날짜를 선택하세요!');
-        return;
-      }
-
-      const formData = new FormData();
-      formData.append("name", name);
-      formData.append("dates", selectedDates.join(","));
-
-      fetch(scriptURL, { method: 'POST', body: formData })
-        .then(response => {
-          alert("✅ 신청이 완료되었습니다!");
-          document.getElementById('name').value = "";
-          document.querySelectorAll('.day.selected').forEach(day => {
-            day.classList.remove('selected');
-          });
-        })
-        .catch(error => alert("❌ 오류 발생: " + error.message));
-    }
-  </script>
+      .catch(error => alert("❌ 오류 발생: " + error.message));
+  }
+</script>
 </body>
 </html>
