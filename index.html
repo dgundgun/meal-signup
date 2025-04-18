@@ -93,10 +93,14 @@
   <button onclick="submitForm()">📤 신청하기</button>
 
   <!-- 신청자 명단 확인 -->
-  <div style="text-align: center; margin-top: 20px;">
-    <button onclick="toggleList()">📋 신청자 명단 보기</button>
-  </div>
-  <div id="nameList" style="display: none;"></div>
+ 
+<!-- ... 기존 <head> 및 <style> 생략 ... -->
+
+<!-- 신청자 명단 확인 -->
+<div style="text-align: center; margin-top: 20px;">
+  <button onclick="showListAfterReload()">📋 신청자 명단 보기</button>
+</div>
+<div id="nameList" style="display: none;"></div>
 
 <script>
   const scriptURL = 'https://script.google.com/macros/s/AKfycbzTqVS1CWQvNTw0huem-s3-rAcrdr2cb_IPKCKA5yMC0JB_YZBPVcLvCdtblNSmPvSk/exec';
@@ -168,6 +172,12 @@
         document.getElementById(`count-${date}`).innerText = `신청자: ${count}명`;
         document.getElementById(`menu-${date}`).innerText = `메뉴: ${menu}`;
       });
+
+      // 쿼리로 명단 표시 요청 시 자동 열기
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('view') === 'list') {
+        toggleList(true);
+      }
     })
     .catch(err => {
       console.error(err);
@@ -177,9 +187,9 @@
       });
     });
 
-  function toggleList() {
+  function toggleList(forceOpen = false) {
     const listDiv = document.getElementById("nameList");
-    if (listDiv.style.display === "none") {
+    if (listDiv.style.display === "none" || forceOpen) {
       let html = "<h3>📋 신청자 명단</h3>";
       const sortedDates = Object.keys(nameData).sort();
       sortedDates.forEach(date => {
@@ -193,6 +203,10 @@
     } else {
       listDiv.style.display = "none";
     }
+  }
+
+  function showListAfterReload() {
+    location.href = window.location.pathname + '?view=list';
   }
 
   function submitForm() {
