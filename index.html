@@ -161,7 +161,7 @@
   fetch(scriptURL + '?t=' + Date.now())
     .then(res => res.json())
     .then(data => {
-      nameData = data.names || {};
+      nameData = data.people || {};
       dateList.forEach(date => {
         const count = data.counts?.[date] ?? 0;
         const menu = data.menus?.[date] ?? '메뉴 없음';
